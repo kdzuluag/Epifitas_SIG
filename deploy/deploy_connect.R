@@ -6,9 +6,9 @@
 rsconnect::deployApp(
   appDir = ".",
   appFiles = c(
-    "app.R", list.files("R", recursive = TRUE, full.names = TRUE), "www/custom.css",
-    list.files("www/docs", full.names = TRUE), "data/processed/occurrences.rds",
-    "data/processed/neotropic.rds", "data/processed/bioregion_mask.rds"
+    "app.R", "DESCRIPTION", list.files("R", recursive = TRUE, full.names = TRUE),
+    "www/custom.css", list.files("www/docs", full.names = TRUE),
+    list.files("data/processed", full.names = TRUE) # occurrences, neotropic, mask, admin1, regions
   ),
   appName = "epig-data-visualizer",
   forceUpdate = TRUE
