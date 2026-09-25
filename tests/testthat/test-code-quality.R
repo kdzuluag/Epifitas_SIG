@@ -97,8 +97,11 @@ test_that("las dependencias usadas en el código están declaradas en DESCRIPTIO
 })
 
 test_that("el proyecto trae los archivos de calidad y reproducibilidad", {
+  # renv.lock NO se exige aquí a propósito: es solo referencia local (no se versiona, ver
+  # .gitignore) porque rsconnect lo detecta por su sola presencia e intenta usarlo para
+  # instalar paquetes en el servidor, rompiendo el despliegue.
   required <- c(
-    "DESCRIPTION", "renv.lock", ".lintr", ".gitignore", ".gitattributes",
+    "DESCRIPTION", ".lintr", ".gitignore", ".gitattributes", ".rscignore",
     "CONTRIBUTING.md", "README.md"
   )
   for (f in required) {
