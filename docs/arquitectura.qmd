@@ -1,0 +1,149 @@
+---
+title: "Arquitectura del sistema EpIG Data Visualizer"
+subtitle: "MVC sobre Shiny · privacidad por diseño · guía para desarrolladores"
+lang: es
+format:
+  html:
+    embed-resources: true
+    toc: true
+    toc-title: "Contenido"
+    theme: cosmo
+    mermaid:
+      theme: neutral
+---
+
+## 1. Visión general
+
+Aplicación web en **R + Shiny** para que taxónomos expertos consulten registros de ocurrencia de epífitas del Neotrópico **sin exponer coordenadas exactas ni permitir descargas**. El diseño responde a tres restricciones del proyecto: (i) R es el lenguaje obligatorio, (ii) el público es un grupo pequeño y experto, (iii) el dato es sensible.
+
+## 2. Capas (MVC)
+
+```{mermaid}
+flowchart TB
+  V["<b>VISTA</b> · R/view<br/>mod_filters · mod_dashboard · mod_analysis<br/>mod_map · mod_table · mod_detail · mod_species<br/><i>solo interfaz y render; sin lógica de negocio</i>"]
+  C["<b>CONTROLADOR</b> · R/controller<br/>auth_controller · data_controller<br/>selection_controller · verification_controller<br/><i>orquesta la reactividad</i>"]
+  M["<b>MODELO</b> · R/model<br/>taxonomy · species · stats · geo · etl<br/>security · verification · verification_store · repository<br/><i>funciones puras, probadas con testthat</i>"]
+  V -- "filtros aplicados · id de registro<br/>veredicto de ubicación" --> C
+  C -- "datos filtrados · estadísticas<br/>capas del mapa · departamentos/regiones" --> V
+  C -- "invoca" --> M
+  M -- "resultados" --> C
+  classDef layer fill:#E5EFE8,stroke:#1E5A3A,stroke-width:2px,color:#143D27
+  class V,C,M layer
+```
+
+| Capa | Regla | Ejemplos |
+|---|---|---|
+| **Modelo** (`R/model`) | Funciones puras, sin `shiny`. Toda la lógica de dominio y seguridad; 100 % probable con `testthat`. | `generalize_coords`, `filter_occurrences`, `chao1`, `resolve_user` |
+| **Controlador** (`R/controller`) | Orquesta reactividad; único que llama al Modelo desde la sesión. | `data_controller`, `verification_controller` |
+| **Vista** (`R/view`) | Solo UI y *render*; recibe reactivos o cierres, nunca importa el Modelo. | `mod_map`, `mod_detail` |
+| **Núcleo** (`R/core`) | Configuración (variables de entorno), esquema Darwin Core, utilidades. | `epig_config`, `DWC_COLS` |
+
+## 3. Flujo de datos (ingeniería de datos)
+
+```{mermaid}
+flowchart LR
+  X["<b>data/raw</b><br/>xlsx/csv + shapefile<br/>CON coordenadas exactas<br/><i>nunca se despliega</i>"]
+  E["<b>ETL</b><br/>scripts/01_build_data.R<br/>valida · normaliza · alerta<br/><b>generaliza y descarta lat/lon</b>"]
+  P["<b>data/processed</b><br/>.rds<br/>SIN coordenadas exactas"]
+  A["<b>app.R</b><br/>carga una vez por proceso<br/>N sesiones"]
+  D[("SQLite<br/>data/private<br/>usuarios · verificaciones · auditoría")]
+  X --> E --> P --> A
+  A -- "escribe" --> D
+  classDef risk fill:#FDECEA,stroke:#B3261E,stroke-width:2px,color:#601410
+  classDef safe fill:#E5EFE8,stroke:#1E5A3A,stroke-width:2px,color:#143D27
+  classDef proc fill:#FFF6DD,stroke:#B58900,stroke-width:2px,color:#5C4600
+  class X risk
+  class E proc
+  class P,A,D safe
+```
+
+**Idea central:** la privacidad se resuelve **en el ETL, antes del despliegue**. Aunque el servidor, el paquete de despliegue o el tráfico del navegador se filtraran, no contienen la posición exacta. `assert_no_raw_coordinates()` detiene el arranque si alguna columna de coordenadas exactas llega a la app.
+
+## 4. Decisiones de arquitectura
+
+| # | Decisión | Motivo | Consecuencia |
+|---|---|---|---|
+| 1 | Generalizar en el ETL, no en la app | Defensa en profundidad: el dato sensible no existe en runtime | Cambiar la cuadrícula exige reejecutar el ETL |
+| 2 | Posición mostrada independiente de la posición intra‑celda | Revela solo la celda; una semilla secreta no aporta seguridad | Precisión ≥ tamaño de celda |
+| 3 | Carga de datos a nivel de proceso | Evita recargar por sesión (bug corregido el 04/08/2026) | Reiniciar para ver datos nuevos |
+| 4 | SQLite (WAL, consultas parametrizadas) para usuarios y verificaciones | Escrituras concurrentes seguras; sin inyección | En hosting efímero se pierde al reiniciar: usar volumen o BD externa (cambiar solo `vs_open`) |
+| 5 | Autenticación por capas (`local` por defecto, `connect`, `proxy`; `none` solo en desarrollo) | Es obligatorio iniciar sesión: antes solo se envía la portada; la interfaz de la app se genera en el servidor tras un acceso válido. `local` guarda solo hashes salados (bcrypt-pbkdf), limita intentos y audita sin registrar contraseñas | `local` no ofrece recuperación de contraseña ni 2FA; en hosting efímero la base de usuarios se pierde (usar volumen o `connect`/`proxy`) |
+| 6 | DT en modo servidor, sin extensión de botones | Solo viaja la página visible; sin exportación | Un usuario autenticado aún puede leer página a página (ver §5) |
+| 7 | Vista sin lógica de negocio (cierres del controlador) | Pruebas del Modelo sin navegador | Un nivel más de indirección |
+
+## 4.1 Verificación de ubicación (reemplaza los comentarios libres)
+
+El taxónomo ya no escribe comentarios libres: al seleccionar un punto responde si está bien
+ubicado y, si no, corrige el departamento/municipio (con un campo adicional de texto libre) o la
+región neotrópica, y cierra la verificación con su nombre y profesión (`R/model/verification.R`
+valida; `R/view/mod_detail.R` construye el formulario paso a paso; ver `docs/qa.qmd` §RQ-09/10).
+
+- **Departamento/estado/provincia:** desplegable filtrado por el país del registro, con nombres
+  de Natural Earth (admin-1, dominio público; `scripts/01b_build_admin1.R` genera
+  `data/processed/admin1.rds`, un archivo de solo nombres, sin geometría).
+- **Municipalidad:** texto libre. No existe un listado mundial de municipios liviano y con
+  licencia clara; exigir un desplegable habría significado depender de GADM (uso no comercial) o
+  de un archivo mucho más pesado.
+- **Región neotrópica:** desplegable con las 54 provincias biogeográficas de Morrone (2014), la
+  misma fuente del polígono del mapa (`extract_neotropical_regions()`, `data/processed/neotropic_regions.rds`).
+- Ni el departamento ni la municipalidad son coordenadas exactas: son divisiones
+  político-administrativas, coherente con la política de no exponer ni pedir posición exacta.
+
+## 5. Modelo de amenazas (resumen)
+
+| Amenaza | Vector | Control implementado | Riesgo residual |
+|---|---|---|---|
+| Exposición de coordenadas exactas | Datos desplegados, red del navegador, código | Generalización en ETL + `assert_no_raw_coordinates` + prueba de integración | Celda con 1 registro de especie rara |
+| Acceso no autorizado | App publicada como pública por error | `resolve_user`: sin identidad ⇒ modal y **cero datos** (verificado) | Depende de la configuración de identidad del hosting |
+| *Scraping* masivo | Bots o usuario autenticado paginando la tabla | Auth + bitácora de filtros + límites de entrada; nginx `limit_req` | Lectura lenta y legítima de la tabla |
+| Inyección SQL | Formulario de verificación (nombre, profesión, departamento, detalle) | Consultas parametrizadas; prueba con `DROP TABLE` | — |
+| Falsificación de identidad (modo proxy) | Cabecera `X-Forwarded-User` inyectada | Token compartido proxy⇄app; el proxy borra la cabecera del cliente | Compromiso del proxy |
+| Abuso de escritura | Verificaciones repetidas | Límite de tasa por sesión; longitud máx.; sanitización | Varias sesiones |
+| Secretos en el repo | `global.R`, `.Renviron` | Todo por variables de entorno; `.gitignore` | Disciplina del equipo |
+| Dependencias vulnerables | Paquetes CRAN | `renv` y revisión periódica | Requiere mantenimiento |
+
+## 6. Optimización de recursos
+
+| Técnica | Dónde | Efecto |
+|---|---|---|
+| Datos preprocesados `.rds` (xz) | ETL | En la demo: 215 KB (6 428 registros) y carga en milisegundos, sin leer Excel en cada arranque |
+| Índice de búsqueda precomputado (`search_txt`) | ETL → `filter_occurrences` | Búsqueda con `grepl(fixed = TRUE)`, sin regex ni riesgo de ReDoS |
+| Carga única por proceso | `app.R` | Memoria constante con N sesiones |
+| `bindCache` | `data_controller` | Filtrado, acumulación, Chao1 y celdas se calculan una vez por combinación de filtros |
+| Selectize y DT en servidor | Vista | No se envían 2 095 especies ni 6 428 filas al navegador |
+| `leafletProxy` + agrupación de marcadores + `preferCanvas` | `mod_map` | Solo se redibuja lo que cambia; fluido con miles de puntos |
+| Polígonos simplificados (5 km) | ETL SIG | Menos vértices que transmitir |
+| Gráficos `renderPlot` con `res` fija | Vistas | Sin *re-render* por redimensionado |
+
+## 7. SIG
+
+- CRS de trabajo y de mapa: **WGS 84 (EPSG:4326)**; la simplificación se hace en EPSG:3857 y se vuelve a 4326.
+- Máscara biorregional: rectángulo global menos el Neotrópico (`st_difference`, con `s2` desactivado solo durante la operación).
+- Capa **Riqueza por celda**: agrega especies y registros por celda de cuadrícula (representación agregada, segura por construcción).
+- Mapas base sin clave de API (Esri, OpenTopoMap).
+
+## 8. Despliegue
+
+| Opción | Autenticación | Notas |
+|---|---|---|
+| Posit Connect Cloud, plan con RBAC | `EPIG_AUTH_MODE=connect` (`session$user`, grupos) | Filesystem efímero: las verificaciones requieren BD externa |
+| Auto‑hospedaje (Docker + nginx + oauth2‑proxy) | `EPIG_AUTH_MODE=proxy` + `EPIG_PROXY_TOKEN` | Ver `deploy/`; **plantillas no probadas** en este entorno |
+| Desarrollo local | `none` (bloqueado si `EPIG_ENV=production`) | Datos demo |
+
+## 9. Pruebas
+
+`Rscript scripts/qa_all.R` — 106 pruebas / 414 expectativas, 11 compuertas críticas de datos, `lintr` sin avisos y 98,7 % de cobertura de líneas: privacidad geoespacial (incluye integración contra el archivo crudo), ETL, taxonomía, estadística (Chao1 contra cálculo manual), autenticación por modos, saneamiento, límites de tasa, SQL parametrizado, bitácora, controladores con `testServer`, guardias de regresión/arquitectura, contrato de interfaz y presupuestos de rendimiento. Criterios de aceptación, lista manual y política de defectos: `qa.html`.
+
+## 10. Límites conocidos y trabajo futuro
+
+- Los datos incluidos son **sintéticos**; con datos reales hay que validar reglas de calidad (p. ej. sinónimos, autoridades).
+- Sin verificación taxonómica contra un *backbone* (World Flora Online / World Ferns): ampliar `clean_occurrences`.
+- Sin pruebas de interfaz de navegador automatizadas (`shinytest2`) ni de carga; accesibilidad con teclado y lector de pantalla pendiente. La cobertura de líneas mide ejecución, no corrección.
+- Sin autenticación de dos factores propia: delegar al IdP del hosting.
+- El listado de departamentos (Natural Earth) tiene algunas provincias/departamentos con el
+  mismo nombre traducido dentro de un mismo país (p. ej. dos unidades de Guyana comparten
+  "Mahaica-Berbice"); es una limitación de la fuente, no del código. La municipalidad es texto
+  libre, sin normalizar contra un gazetteer.
+- Falta un panel para que la coordinación revise el historial de verificaciones agregado (hoy
+  solo se ve el conteo por registro en la Vista; el detalle está en la base SQLite).
+- Internacionalización (ES/EN) pendiente, relevante para una audiencia mundial.

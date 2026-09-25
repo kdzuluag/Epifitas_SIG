@@ -1,0 +1,183 @@
+---
+title: "Plan y criterios de QA"
+subtitle: "EpIG Data Visualizer · calidad de datos, código, seguridad, accesibilidad y rendimiento"
+lang: es
+format:
+  html:
+    embed-resources: true
+    toc: true
+    toc-title: "Contenido"
+    theme: cosmo
+---
+
+```{r}
+#| include: false
+suppressPackageStartupMessages(library(dplyr))
+for (f in c("../R/core/schema.R", "../R/core/utils.R", "../R/model/qa.R")) source(f, encoding = "UTF-8")
+```
+
+## 1. Estrategia
+
+La QA parte de un principio: **lo que protege a los datos sensibles no puede depender de que alguien se acuerde de revisarlo**. Por eso los requisitos de privacidad, los defectos ya corregidos y las reglas de arquitectura están convertidos en pruebas automáticas que bloquean el despliegue. Lo que no se puede automatizar (uso real, accesibilidad con tecnologías de apoyo) queda en una lista de verificación manual con estado explícito.
+
+| Nivel | Qué verifica | Herramienta | Archivos |
+|---|---|---|---|
+| **Compuertas de datos** | Que los datos procesados sean seguros y coherentes antes de desplegar | `qa_data_gates()` · `scripts/02_qa_data.R` | `R/model/qa.R` |
+| **Estilo** | Estilo tidyverse, líneas ≤ 100 caracteres | `lintr` + `styler` (`.lintr`) | `scripts/style_and_lint.R` |
+| **Unitarias (Modelo)** | Funciones puras: generalización, ETL, taxonomía, estadística, seguridad | `testthat` | `test-geo-privacy`, `test-etl`, `test-taxonomy-stats`, `test-security` |
+| **Integración** | Datos crudos ⇄ procesados; controladores con reactividad real | `testthat` + `shiny::testServer` | `test-integration-privacy`, `test-controllers` |
+| **Guardias de regresión y arquitectura** | Defectos corregidos, prohibición de descargas, MVC, secretos | Inspección estática del código | `test-regression-guards` |
+| **Calidad de código** | Documentación, tamaño de funciones, sin `<<-`, dependencias declaradas | Inspección estática | `test-code-quality` |
+| **Módulos y helpers de la Vista** | Servidores de módulo, escape de HTML, capas del mapa | `shiny::testServer` | `test-modules`, `test-view-helpers` |
+| **Contrato de interfaz** | Accesibilidad básica y requisitos visibles | HTML de `main_ui()` | `test-ui-contract` |
+| **Rendimiento** | Presupuestos de tiempo y tamaño | `system.time` | `test-performance` |
+| **Cobertura** | Líneas ejecutadas por las pruebas (piso 90 %) | `covr` | `scripts/qa_all.R` |
+| **Manual / exploratoria** | Uso real en navegador | Lista de la sección 6 | — |
+
+Ejecutar todo: `Rscript scripts/qa_all.R` (código de salida ≠ 0 si algo falla). Estado actual: **106 pruebas, 414 expectativas, `lintr` sin avisos, cobertura de líneas 98,7 %**. Detalle de un archivo: `Rscript scripts/run_test_file.R test-controllers.R`.
+
+## 2. Criterios de aceptación trazables
+
+Estados: **Auto** = cubierto por prueba automática · **Manual** = verificado a mano en navegador el 2026-09-18 con datos de demostración · **Pendiente** = aún no verificado.
+
+| ID | Requisito | Criterio de aceptación (Dado / Cuando / Entonces) | Verificación | Estado |
+|---|---|---|---|---|
+| RQ-01 | Filtrar por familia o grupo taxonómico | Dado el dataset, cuando aplico nivel = Familia y valor = *Orchidaceae*, entonces solo se listan esas filas y el contador coincide | `test-controllers`, `test-taxonomy-stats` | Auto |
+| RQ-02 | Búsqueda libre en todos los niveles | Cuando escribo «TILLANDSIA», entonces coincide sin importar mayúsculas ni tildes y exige todos los términos | `test-taxonomy-stats`; búsqueda real en navegador | Auto + Manual |
+| RQ-03 | Aplicar / Restablecer filtros | Cuando restablezco, vuelven todos los registros y desaparecen las etiquetas de filtro | `test-ui-contract`; navegador | Auto + Manual |
+| RQ-04 | Cuatro indicadores del resumen | Se muestran registros, especies únicas, localidades únicas y registros sin coordenadas | Navegador | Manual |
+| RQ-05 | Dos gráficos con selector taxonómico independiente | Cada gráfico admite orden/familia/género/especie sin afectar al otro; género y especie en cursiva | `test-ui-contract`; navegador (A = familia, B = género) | Auto + Manual |
+| RQ-06 | Tabla con todos los campos salvo coordenadas | Ninguna columna visible es latitud/longitud | `test-regression-guards`, `test-integration-privacy` | Auto |
+| RQ-07 | Capas del mapa conmutables (límite, máscara, ocurrencias) | El control de capas permite activar/desactivar cada una | Navegador: base, máscara y puntos verificados | **Parcial** (alternar capas: pendiente) |
+| RQ-08 | Colorear por especie/género/familia/orden/localidad | Cambiar el selector recolorea y actualiza la leyenda | Navegador: solo *Familia* verificada | **Parcial** |
+| RQ-09 | Clic en punto muestra detalle **sin coordenadas** + verificación de ubicación | Se ve ficha, ubicación como celda y el formulario Sí/No | Navegador | Manual |
+| RQ-10 | Verificaciones persistentes y seguras, con nombre y profesión del revisor | Se guardan por registro; SQL hostil se guarda como texto inerte | `test-security`, `test-controllers`, `test-verification-model`; navegador | Auto + Manual |
+| RQ-11 | Ubicación aproximada, nunca exacta | Ningún punto coincide con la coordenada real y todos caen en su celda | `test-geo-privacy`, `test-integration-privacy`, compuertas Q02/Q06 | Auto |
+| RQ-12 | Sin descargas | No existe `downloadHandler`, botón ni extensión de exportación | `test-regression-guards`, `test-ui-contract` | Auto |
+| RQ-13 | Acceso solo para autorizados | Sin identidad ⇒ aviso de acceso restringido y **cero datos** | `test-security`; navegador en modo `connect` | Auto + Manual |
+| RQ-14 | Datos cargados una vez por proceso; respuesta ágil | Sin `load_repository` fuera de `app.R`; filtrado < 0,25 s | `test-regression-guards`, `test-performance` | Auto |
+| RQ-15 | Sin `install.packages()` en producción | No aparece en el código de la app | `test-regression-guards` | Auto |
+| RQ-16 | Cuenta institucional y despliegue | Publicado en la cuenta EpIG con autenticación real | — | **Pendiente** (depende de la decisión de hosting) |
+
+## 3. Compuertas de calidad de datos
+
+Las críticas **bloquean** el despliegue; los avisos exigen revisión humana. Resultado sobre los datos procesados actuales:
+
+```{r}
+#| echo: false
+p <- "../data/processed/occurrences.rds"
+if (file.exists(p)) {
+  g <- qa_data_gates(readRDS(p), rds_path = p)
+  g$estado <- ifelse(g$ok, "OK", ifelse(g$severidad == "critico", "FALLA", "AVISO"))
+  knitr::kable(g[, c("id", "severidad", "estado", "descripcion", "detalle")], row.names = FALSE)
+} else cat("Ejecute scripts/01_build_data.R para generar los datos procesados.")
+```
+
+Las propias compuertas están probadas (`test-qa-gates`): se comprueba que **detectan** una columna de coordenadas filtrada, claves duplicadas, un punto fuera de su celda, una especie sensible con celda fina, un año imposible y un dataset vacío.
+
+## 4. Regresión de defectos ya corregidos (04/08/2026)
+
+| Defecto original | Guardia automática |
+|---|---|
+| `source("global.R")` dentro de `server.R` recargaba datos por sesión | Sin `source("global.R")`; `load_repository` solo en `app.R` |
+| `install.packages()` en `global.R` | Búsqueda de `install.packages(` en todo el código |
+| `aes_string()` obsoleto | Búsqueda de `aes_string(` |
+| Doble renderizado del mapa | `renderLeaflet` no puede contener `addCircleMarkers`/`addMarkers` |
+| Coordenadas NA enviadas al mapa | El punto del mapa solo existe si `has_coords`; compuerta Q05 |
+| Handler de descarga sin botón | Prohibidos `downloadHandler`, `downloadButton` y extensiones de exportación |
+| Coordenadas visibles en tabla y popups | Solo ETL/SIG pueden nombrar coordenadas; Vista y Controlador, no |
+
+**Pruebas de mutación (2026-09-18):** se inyectaron a propósito `install.packages()`, `downloadButton()`, `decimalLatitude` y `HTML()` en la Vista, y después una función sin documentar, un `<<-`, un `tryCatch` que traga errores y marcadores en el mapa base. Las guardias detectaron todas las violaciones y los archivos se restauraron idénticos.
+
+## 4.1 Buenas prácticas de código verificadas automáticamente
+
+| Práctica | Verificación |
+|---|---|
+| Estilo consistente y líneas ≤ 100 | `lintr` con 0 avisos (etapa de `qa_all.R`) |
+| Toda función documentada, con `@param` y `@return` en los bloques roxygen | `test-code-quality` |
+| Funciones de ≤ 50 líneas | `test-code-quality` |
+| Sin `<<-` y sin errores silenciados (`tryCatch(..., error = function(e) NULL)`) | `test-code-quality` |
+| La bitácora de auditoría avisa cuando no puede escribir | `test-security` |
+| Dependencias declaradas en `DESCRIPTION` y versiones fijadas en `renv.lock` | `test-code-quality` |
+| Finales de línea LF y archivo terminado en salto de línea | `test-code-quality` |
+| Constantes de validación y umbrales de QA con nombre (sin números sueltos) | `R/core/schema.R`, `R/model/qa.R` |
+| Cobertura de líneas ≥ 90 % | `covr` (etapa de `qa_all.R`) |
+
+**No verificado automáticamente:** el flujo Git del equipo (*pull*, *commit* descriptivo, *push*); está descrito en `CONTRIBUTING.md`, pero el proyecto todavía no es un repositorio Git.
+
+## 5. Seguridad, rendimiento y arquitectura
+
+| Área | Comprobación | Umbral |
+|---|---|---|
+| Privacidad | Posición mostrada ≠ real, misma celda, mediana de desplazamiento | > 0,045° (≈ 5 km) |
+| Autenticación | Modos `none`/`connect`/`proxy`; producción prohíbe `none` | Todos los casos |
+| Entrada | Filtros malformados, 10 000 caracteres, SQL/HTML hostil | Sin error de sesión |
+| Escritura | Límite de tasa, rol de solo lectura, auditoría de cada verificación | Exacto |
+| Rendimiento | Carga del repositorio · filtrado completo · acumulación · celdas · ETL | < 3 s · < 0,25 s · < 3 s · < 3 s · < 30 s |
+| Tamaño | Archivo procesado · objeto en memoria | < 5 MB · < 25 MB |
+| Arquitectura MVC | Modelo sin `shiny`; Vista sin acceso a datos/seguridad ni `HTML()` | 0 infracciones |
+| Secretos | Sin contraseñas/tokens/rutas absolutas; `.gitignore` protege `data/raw`, `data/private`, `.Renviron` | 0 infracciones |
+
+## 6. Lista de verificación manual (antes de cada publicación)
+
+Marque solo lo que haya comprobado en esa versión.
+
+**Funcional**
+
+- [ ] Alternar cada capa del control de capas (límite, máscara, ocurrencias, riqueza por celda)
+- [ ] Probar los cinco valores de «Colorear por» y la leyenda
+- [ ] Activar/desactivar «Agrupar puntos»
+- [ ] Filtrar por país, piso altitudinal y rango de años; combinar filtros
+- [ ] Seleccionar una fila de la tabla y comprobar que el detalle coincide con el mapa
+- [ ] Responder «No» → «Ubicación geográfica», completar departamento/municipio/detalle y enviar
+- [ ] Responder «No» → «Región neotrópica», elegir una provincia y enviar
+- [ ] Verificar que el conteo aumenta en la columna «Verificaciones» de la tabla y que el formulario vuelve a la pregunta inicial
+
+**Seguridad (con la cuenta/hosting reales)**
+
+- [ ] Abrir la URL en ventana privada **sin sesión**: debe mostrar «Acceso restringido» y ningún dato
+- [ ] Revisar la pestaña Red del navegador: sin coordenadas con más precisión que la celda
+- [ ] Confirmar que el usuario de solo lectura no ve el formulario de verificación
+- [ ] Verificar que `data/raw` y `data/private` no están en el paquete desplegado
+
+**Accesibilidad (WCAG 2.2 AA)**
+
+| Criterio | Estado |
+|---|---|
+| Idioma de la página, etiquetas de controles, texto alternativo de gráficos | Auto |
+| Foco visible (CSS propio) | Implementado; sin verificar con herramienta |
+| Contraste de texto y de la paleta del mapa | **Pendiente** de medición |
+| Navegación completa solo con teclado | **Pendiente** |
+| Lector de pantalla (NVDA/VoiceOver) | **Pendiente** |
+| Zoom al 200 % y ventana estrecha | **Pendiente** (solo visto el colapso del panel lateral a ~800 px) |
+| Movimiento reducido (`prefers-reduced-motion`) | Implementado; sin verificar |
+
+**Datos**
+
+- [ ] Con datos reales, revisar `docs/out/calidad_datos.html` y las alertas de género/familia con un taxónomo
+- [ ] Confirmar con la coordinación el tamaño de celda y qué especies llevan `sensitivityLevel` 1 o 2
+
+## 7. Política de defectos
+
+| Severidad | Ejemplo | Acción |
+|---|---|---|
+| **S1 · Crítica** | Coordenada exacta expuesta; acceso sin identidad; XSS/SQL | Bloquea; corregir y añadir guardia antes de publicar |
+| **S2 · Alta** | Filtro devuelve resultados incorrectos; se pierden verificaciones | Corregir antes de la siguiente publicación |
+| **S3 · Media** | Etiqueta confusa, gráfico ilegible en una resolución | Planificar |
+| **S4 · Baja** | Estética | Al pasar |
+
+Todo defecto S1/S2 debe dejar **una prueba nueva que lo reproduzca** (regla de regresión).
+
+## 8. Definición de «hecho» para publicar
+
+1. `Rscript scripts/qa_all.R` termina con **APTO** (compuertas críticas, 0 fallos, 0 pruebas omitidas).
+2. Lista manual de la sección 6 completada para los cambios de la versión.
+3. Protocolo Git del equipo: *pull* antes de empezar; *commit* descriptivo, *pull* y *push* al terminar.
+4. Datos crudos fuera del paquete; variables de entorno de producción definidas (`EPIG_ENV=production`, modo de autenticación real).
+
+## 9. Límites de esta QA
+
+- Las pruebas automáticas no incluyen interfaz de navegador (`shinytest2`): la UI se verificó manualmente.
+- La cobertura de líneas (99,0 %) mide qué código se ejecuta, no si las comprobaciones son suficientes; no se hicieron pruebas de carga con muchos usuarios simultáneos.
+- El CI (`.github/workflows/qa.yml`) **no se ha ejecutado** todavía.
+- Los datos son sintéticos: las compuertas validan la mecánica, no la calidad taxonómica real.

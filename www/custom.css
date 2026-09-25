@@ -1,0 +1,61 @@
+/* Accesibilidad y densidad de información para usuarios expertos */
+:focus-visible { outline: 3px solid #0072B2 !important; outline-offset: 2px; }
+.bslib-value-box .value-box-value { font-variant-numeric: tabular-nums; }
+.card-header { font-weight: 600; }
+.card-header .shiny-input-container { margin-bottom: 0; width: auto !important; display: flex; align-items: center; gap: .5rem; }
+.card-header .shiny-input-container > label { margin-bottom: 0; white-space: nowrap; font-weight: 500; }
+.leaflet-container { font-family: inherit; }
+.badge.text-bg-light { font-weight: 500; color: #333 !important; }
+table.dataTable td { font-size: 0.85rem; }
+dt, dd { margin-bottom: .25rem; }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
+
+/* ---- Identidad visual propia de EpIG: encabezado índigo, acentos ámbar y ciruela, fondo cálido ---- */
+body { background: #F7F5F0; font-family: Lato, system-ui, "Segoe UI", sans-serif; }
+.navbar { text-transform: uppercase; letter-spacing: .04em; font-size: .78rem; }
+.navbar .navbar-brand { text-transform: none; font-size: 1.35rem; letter-spacing: 0; }
+.navbar .nav-link { border-bottom: 2px solid transparent; }
+.navbar .nav-link.active { border-bottom-color: #7B2D8E; }
+.group-hero { display: flex; justify-content: space-between; align-items: center; gap: 1.5rem;
+  background: #2B2D42; color: #fff; padding: 1.25rem 2rem 1.5rem; }
+.group-hero h1 { color: #F2B84B; font-size: 1.6rem; text-transform: uppercase; margin: 0 0 .25rem; }
+.group-hero .hero-sub { color: #dfe1ec; margin: 0 0 .6rem; }
+.group-hero .hero-mod span { color: #F2B84B; margin-right: .5rem; text-transform: uppercase;
+  font-size: .75rem; border-bottom: 2px solid #7B2D8E; }
+.hero-emblem { flex: 0 0 auto; width: 84px; height: 84px; border-radius: 50%; display: grid;
+  place-items: center; background: #F2B84B; color: #2B2D42; font-size: 2.4rem; }
+.card { border: 0; border-radius: 2px; box-shadow: 0 1px 2px rgba(0, 0, 0, .12); }
+.card-header { background: #fff; color: #8A5A00; text-transform: uppercase; letter-spacing: .05em;
+  font-size: .8rem; border-bottom: 1px solid #e3e3e3; }
+.bslib-value-box { border: 1px solid #2B2D42 !important; background: #fff !important; color: #2B2D42 !important; }
+.bslib-value-box .value-box-title { text-transform: uppercase; font-size: .78rem; color: #444; }
+.bslib-value-box .value-box-value { border-top: 2px solid #7B2D8E; padding-top: .3rem; font-weight: 700; }
+.statbox { border: 1px solid #2B2D42; background: #fff; text-align: center; padding: .5rem; }
+.statbox .stat-label { display: block; text-transform: uppercase; font-size: .7rem; color: #444;
+  border-bottom: 2px solid #7B2D8E; margin-bottom: .3rem; }
+.statbox b { font-size: 1.6rem; }
+.species-name { color: #7B2D8E; }
+.site-footer { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 1rem;
+  background: #2A2622; color: #e6e6e6; padding: 1.25rem 2rem; font-size: .85rem; }
+.site-footer .footer-links { color: #F2B84B; }
+.btn-primary { color: #fff; }
+a { color: #5B2C83; }
+
+/* ---- Portada de acceso ---- */
+.landing { min-height: 100vh; display: grid; grid-template-columns: 1.1fr 1fr; align-items: center;
+  gap: 2rem; padding: 3rem 4rem; color: #fff; position: relative;
+  background: linear-gradient(135deg, #2B2D42 0%, #3d3f63 60%, #4a2c5c 100%); }
+.landing-brand h1 { font-size: 4.5rem; letter-spacing: .04em; margin: .5rem 0 0; color: #fff; }
+.landing-tag { font-size: 1.4rem; color: #F2B84B; margin: 0 0 1rem; }
+.landing-sub { max-width: 30rem; color: #dfe1ec; }
+.landing-emblem { width: 96px; height: 96px; border-radius: 50%; display: grid; place-items: center;
+  background: #F2B84B; color: #2B2D42; font-size: 2.8rem; }
+.landing-card { background: #fff; color: #222; padding: 2rem; border-radius: 4px; max-width: 24rem;
+  width: 100%; justify-self: center; box-shadow: 0 8px 30px rgba(0, 0, 0, .35); }
+.landing-card h2 { color: #7B2D8E; font-size: 1.3rem; text-transform: uppercase; letter-spacing: .05em; }
+.landing-card .btn-primary { background: #2B2D42; border-color: #2B2D42; }
+.landing-foot { position: absolute; bottom: 1rem; left: 4rem; font-size: .8rem; color: #b9bccf; }
+@media (max-width: 768px) { .landing { grid-template-columns: 1fr; padding: 2rem 1.25rem 4rem; }
+  .landing-brand h1 { font-size: 3rem; } .landing-foot { left: 1.25rem; } }
+.navbar #logout { color: #fff; }
+.navbar #logout:hover { color: #F2B84B; }

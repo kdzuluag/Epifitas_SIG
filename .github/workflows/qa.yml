@@ -1,0 +1,24 @@
+# Plantilla de CI NO ejecutada todavía. Corre la QA completa con datos de demostración en cada push/PR.
+# Los datos reales (data/raw) no están en el repositorio: el CI valida la mecánica, no la calidad taxonómica real.
+name: QA
+on: [push, pull_request]
+
+jobs:
+  qa:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: r-lib/actions/setup-r@v2
+        with:
+          r-version: "4.5.3"
+          use-public-rspm: true
+      - name: Librerías del sistema (SIG, SQLite, SSL)
+        run: sudo apt-get update && sudo apt-get install -y libgdal-dev libgeos-dev libproj-dev libudunits2-dev libsqlite3-dev libssl-dev libcurl4-openssl-dev
+      - name: Dependencias de R
+        run: Rscript deploy/install_deps.R
+      - name: Datos de demostración + ETL
+        run: |
+          Rscript scripts/00_make_demo_data.R
+          Rscript scripts/01_build_data.R
+      - name: QA (compuertas de datos + pruebas)
+        run: Rscript scripts/qa_all.R

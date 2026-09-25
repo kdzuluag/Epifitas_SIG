@@ -1,0 +1,106 @@
+---
+title: "Metodología y límites de interpretación"
+lang: es
+format:
+  html:
+    embed-resources: true
+    toc: true
+    toc-title: "Contenido"
+    theme: cosmo
+    css: metodologia.css
+---
+
+```{r}
+#| include: false
+source("../R/core/schema.R")
+source("../R/model/geo.R")
+```
+
+## Propósito
+
+Esta herramienta permite a taxónomos y especialistas **explorar y revisar** registros de ocurrencia de epífitas vasculares del Neotrópico: filtrar por grupo taxonómico, examinar su distribución y verificar si cada punto está bien ubicado. No es un portal de descarga ni un sustituto de la consulta directa a los ejemplares o a la base de datos original.
+
+## Datos
+
+Los registros siguen un subconjunto de 20 campos del estándar **Darwin Core**. Antes de llegar a la aplicación pasan por un proceso automático (ETL) que:
+
+1. Verifica el esquema y normaliza texto (espacios, mayúsculas de orden, familia y género).
+2. Asigna una clave única a cada registro (si `recordID` se repite, se marca).
+3. Interpreta elevación (`verbatimElevation`) y año (`eventDate`) desde formatos heterogéneos.
+4. Valida coordenadas y **descarta de la aplicación** las que no son utilizables.
+5. **Generaliza** las coordenadas y elimina las exactas (ver abajo).
+6. Emite alertas de calidad para revisión taxonómica.
+
+## Generalización de coordenadas
+
+Las coordenadas exactas de las poblaciones de epífitas son información sensible (riesgo de extracción ilegal). Por eso la aplicación **nunca recibe** la posición exacta:
+
+- El espacio se divide en una cuadrícula de **`r format(0.5)`° (≈ `r round(0.5 * 111)` km)** por defecto.
+- De cada registro solo se conserva **la celda** en que cae.
+- El punto que se dibuja es una posición pseudoaleatoria *dentro* de esa celda, calculada a partir del identificador del registro y **no de su posición real**. Por eso la posición mostrada no permite recuperar el sitio de colecta más allá de la celda.
+- Las especies marcadas como sensibles (`sensitivityLevel` 1 o 2) usan celdas 2× o 4× más grandes.
+
+```{r}
+#| echo: false
+knitr::kable(data.frame(
+  `Nivel de sensibilidad` = c("0 (normal)", "1 (alta)", "2 (muy alta)"),
+  `Celda` = paste0(0.5 * GRID_MULTIPLIER, "°"),
+  `Aprox.` = paste0("≈ ", round(0.5 * GRID_MULTIPLIER * 111), " km"),
+  check.names = FALSE
+))
+```
+
+Es una generalización a cuadrícula en la línea de las buenas prácticas de GBIF para datos de especies sensibles (GBIF Secretariat 2021). Una limitación inherente: si una celda contiene un único registro de una especie muy rara, la celda misma ya es informativa.
+
+## Pisos altitudinales
+
+```{r}
+#| echo: false
+knitr::kable(data.frame(Piso = ELEV_LABELS))
+```
+
+Se asignan a partir de la elevación interpretada. Las etiquetas con rango (`1200-1500`) usan el punto medio.
+
+## Alertas de calidad
+
+Sirven para orientar la revisión; **no corrigen** los datos ni implican error.
+
+```{r}
+#| echo: false
+knitr::kable(data.frame(Alerta = unname(QUALITY_FLAGS)))
+```
+
+## Estadística
+
+**Curva de acumulación de especies.** Se reordenan al azar los registros 30 veces y se cuenta cuántas especies distintas van apareciendo; se muestra la media y la banda del 5–95 %. Una curva que aún crece indica muestreo incompleto.
+
+**Riqueza estimada (Chao1).** Con la corrección de sesgo de Chao (1987):
+
+$$\hat{S}_{\text{Chao1}} = S_{\text{obs}} + \frac{f_1 (f_1 - 1)}{2 (f_2 + 1)}$$
+
+donde $f_1$ y $f_2$ son las especies con exactamente uno y dos registros.
+
+::: {.callout-warning}
+## Cómo interpretar
+Un **registro de colecta no es un individuo**, y las colectas están sesgadas por accesibilidad, época y especialistas activos. Estas estadísticas indican esfuerzo de muestreo y completitud *relativa*, no abundancia ni riqueza real.
+:::
+
+## Uso responsable
+
+- Cite siempre a los colectores e instituciones de cada registro.
+- No redistribuya capturas ni contenido sin autorización de la coordinación del proyecto.
+- La verificación de ubicación identifica a quien la hace (nombre y profesión) y no reemplaza una determinación taxonómica formal.
+
+## Polígono del Neotrópico
+
+El límite mostrado en el mapa es la región Neotropical de la regionalización biogeográfica de Morrone (2014), en la versión en formato *shapefile* de Löwenberg-Neto (2014): 55 unidades (dominios, subregiones y provincias) que se disuelven en un único polígono y se simplifican (tolerancia de 5 km) para aligerar la transferencia. El archivo original se publica con licencia CC BY 4.0 y se conserva en `data/raw/`, que no se despliega. Es un límite biogeográfico, no político: no coincide con las fronteras de los países.
+
+## Referencias
+
+Löwenberg-Neto P. 2014. Neotropical region: a shapefile of Morrone's (2014) biogeographical regionalisation. Zootaxa. 3802(2):300. https://doi.org/10.11646/zootaxa.3802.2.12
+
+Morrone JJ. 2014. Biogeographical regionalisation of the Neotropical region. Zootaxa. 3782(1):1–110. https://doi.org/10.11646/zootaxa.3782.1.1
+
+Chao A. 1987. Estimating the population size for capture-recapture data with unequal catchability. Biometrics. 43(4):783–791.
+
+GBIF Secretariat. 2021. Guide to best practices for generalising sensitive species occurrence data [Internet]. Copenhagen: Global Biodiversity Information Facility; [citado 2026 sep 17]. Disponible en: https://docs.gbif.org/sensitive-species-best-practices/master/en/

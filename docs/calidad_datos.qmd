@@ -1,0 +1,86 @@
+---
+title: "Reporte de calidad de datos"
+subtitle: "Generado desde data/processed/occurrences.rds (sin coordenadas exactas)"
+lang: es
+format:
+  html:
+    embed-resources: true
+    toc: true
+    toc-title: "Contenido"
+    theme: cosmo
+    code-fold: true
+---
+
+```{r}
+#| include: false
+suppressPackageStartupMessages(library(dplyr)); library(ggplot2)
+for (f in c("../R/core/schema.R", "../R/core/utils.R", "../R/model/stats.R", "../R/model/geo.R")) source(f, encoding = "UTF-8")
+occ <- readRDS("../data/processed/occurrences.rds")
+assert_no_raw_coordinates(occ)
+ov <- summarise_overview(occ)
+```
+
+```{r}
+#| echo: false
+if (isTRUE(attr(occ, "demo"))) cat("> **DATOS SINTÉTICOS DE DEMOSTRACIÓN.** Este reporte ilustra el formato; no refleja datos reales.\n")
+```
+
+## Resumen
+
+```{r}
+#| echo: false
+knitr::kable(data.frame(
+  Métrica = c("Registros", "Especies únicas", "Localidades únicas", "Con ubicación utilizable", "Sin ubicación", "Con al menos una alerta", "Construido"),
+  Valor = c(fmt_int(ov$n_records), fmt_int(ov$n_species), fmt_int(ov$n_localities), fmt_pct(ov$pct_georef),
+            fmt_int(ov$n_no_coords), fmt_int(sum(nzchar(occ$quality_flags))), attr(occ, "built_at"))
+))
+```
+
+## Alertas por tipo
+
+```{r}
+#| echo: false
+q <- quality_summary(occ)
+knitr::kable(transform(q$flags[, c("label", "n", "pct")], pct = fmt_pct(pct, 2)), col.names = c("Alerta", "Registros", "%"))
+```
+
+## Completitud de campos
+
+```{r}
+#| echo: false
+#| fig-height: 2.6
+d <- q$completeness; d$campo <- factor(d$campo, levels = rev(d$campo))
+ggplot(d, aes(pct, campo)) + geom_col(fill = "#1E5A3A") +
+  geom_text(aes(label = fmt_pct(pct, 0)), hjust = 1.1, colour = "white") +
+  scale_x_continuous(limits = c(0, 1), labels = function(x) fmt_pct(x, 0)) + labs(x = NULL, y = NULL) + theme_minimal(base_size = 12)
+```
+
+## Georreferenciación por país
+
+```{r}
+#| echo: false
+occ |>
+  filter(!is.na(countryCode)) |>
+  group_by(País = country_name(countryCode)) |>
+  summarise(Registros = n(), `Con ubicación` = sum(has_coords), `%` = fmt_pct(mean(has_coords)), .groups = "drop") |>
+  arrange(desc(Registros)) |> knitr::kable()
+```
+
+## Registros con familia atípica para su género
+
+Candidatos a revisión taxonómica (la familia difiere de la más frecuente para ese género).
+
+```{r}
+#| echo: false
+occ |>
+  filter(grepl("genero_multiples_familias", quality_flags, fixed = TRUE)) |>
+  select(recordID, Género = genus, Familia = family, Especie = speciesName, País = countryCode) |>
+  head(30) |> knitr::kable()
+```
+
+## Distribución de sensibilidad y tamaño de celda
+
+```{r}
+#| echo: false
+occ |> count(sensitivityLevel, cell_deg, name = "registros") |> knitr::kable()
+```
