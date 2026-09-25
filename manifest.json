@@ -1,0 +1,301 @@
+{
+  "version": 1,
+  "locale": "es_CO",
+  "platform": "4.5.3",
+  "metadata": {
+    "appmode": "static",
+    "primary_rmd": null,
+    "primary_html": "docs/out/arquitectura.html",
+    "content_category": null,
+    "has_parameters": false
+  },
+  "packages": null,
+  "files": {
+    ".gitattributes": {
+      "checksum": "15218e2a3489079c4a4d80ee26e5d55a"
+    },
+    ".github/workflows/qa.yml": {
+      "checksum": "18094bf806353811e67e9bb5f275f2fe"
+    },
+    ".lintr": {
+      "checksum": "5cb11c2853e514045071805e8f061571"
+    },
+    ".Rbuildignore": {
+      "checksum": "7f3003188f3a78fd085feca239edcc60"
+    },
+    "CONTRIBUTING.md": {
+      "checksum": "eaaf4f87feef47f6cd02f0b1cf5098dd"
+    },
+    "data/private/audit.jsonl": {
+      "checksum": "fa21537baa7ef022365bdeec3a92fedc"
+    },
+    "data/private/users.sqlite": {
+      "checksum": "5a649315af132cb4bc1d54af8f173341"
+    },
+    "data/private/verifications.sqlite": {
+      "checksum": "c31fc78cdd63aef6d5e8546f2d28a5e9"
+    },
+    "data/processed/admin1.rds": {
+      "checksum": "8f537af541f1d009210926b84479a4cd"
+    },
+    "data/processed/bioregion_mask.rds": {
+      "checksum": "3f52db436fb3a4acd80bb2789f2d8be7"
+    },
+    "data/processed/neotropic.rds": {
+      "checksum": "a3e5fc6276c05e0451dfc4c5a149fa0f"
+    },
+    "data/processed/neotropic_regions.rds": {
+      "checksum": "024420a61684b82ec34f8bc28e082286"
+    },
+    "data/processed/occurrences.rds": {
+      "checksum": "770971427a47a3ce1e9a8c871b4ccc9e"
+    },
+    "data/raw/DEMO_Occurrences.csv": {
+      "checksum": "9dd5056a9fa92c1d5eeac3af8318c63a"
+    },
+    "data/raw/morrone2014/Lowenberg_Neto_2014.dbf": {
+      "checksum": "9976c32b18c6bb0a596cd73691b18f7d"
+    },
+    "data/raw/morrone2014/Lowenberg_Neto_2014.prj": {
+      "checksum": "df1ab3af557c3cf3462571afab2587f3"
+    },
+    "data/raw/morrone2014/Lowenberg_Neto_2014.shp": {
+      "checksum": "31c8637003a220e0510da3e38a00eb92"
+    },
+    "data/raw/morrone2014/Lowenberg_Neto_2014.shx": {
+      "checksum": "2f8d666bed451c0a74706882cf921eb8"
+    },
+    "deploy/deploy_connect.R": {
+      "checksum": "542c242b26e50020e46099d9bca5cdf4"
+    },
+    "deploy/Dockerfile": {
+      "checksum": "b9fbfafd011d06575e623bd3bac5349c"
+    },
+    "deploy/install_deps.R": {
+      "checksum": "ae4a4856fb89e71538e6534ddc40368f"
+    },
+    "deploy/nginx.conf": {
+      "checksum": "8d959c6ff3c5fd4dfdd1e0b5ea9a3e01"
+    },
+    "DESCRIPTION": {
+      "checksum": "1503d76587079331d0ad316b3c185191"
+    },
+    "docs/arquitectura.qmd": {
+      "checksum": "4a8f3b6555259e2f5ccd468279bd1c9c"
+    },
+    "docs/calidad_datos.qmd": {
+      "checksum": "ff893cbd4822bc72c4beb5cb61f992c2"
+    },
+    "docs/metodologia.css": {
+      "checksum": "44514ad60f5248d6c2f48a7632b84f8a"
+    },
+    "docs/metodologia.qmd": {
+      "checksum": "2578ca57e7b3f28da6c799cba871578a"
+    },
+    "docs/out/arquitectura.html": {
+      "checksum": "1b13979e7296d801cb53874149771e61"
+    },
+    "docs/out/calidad_datos.html": {
+      "checksum": "a507b02d6677b5fc63f5a031395d7fb7"
+    },
+    "docs/out/qa.html": {
+      "checksum": "1b9289b70263685a411e884b71302937"
+    },
+    "docs/qa.qmd": {
+      "checksum": "e88222b23e5f657049f20aa501afbf7e"
+    },
+    "R/controller/auth_controller.R": {
+      "checksum": "71709c53e1b087c395cd75d5ed20ee59"
+    },
+    "R/controller/data_controller.R": {
+      "checksum": "924a58deded8132f5e0270c41c5c7f5b"
+    },
+    "R/controller/record_controller.R": {
+      "checksum": "ea942346d93eabb36d7ee485f26ae0d4"
+    },
+    "R/core/app.R": {
+      "checksum": "657a25ec2f08fc6a24219221667c6077"
+    },
+    "R/core/config.R": {
+      "checksum": "1449153bda9e463235a58df63ac8e7a8"
+    },
+    "R/core/schema.R": {
+      "checksum": "8799cbbfcfda03c48b7f8bd90e0af1f0"
+    },
+    "R/core/utils.R": {
+      "checksum": "8c6ee15963f5fb210f2f37e994c70617"
+    },
+    "R/model/etl.R": {
+      "checksum": "17b738ca3e6d8412b32d8e988c4417f7"
+    },
+    "R/model/geo.R": {
+      "checksum": "bb45ed5f92cb434afeeb4ce350429281"
+    },
+    "R/model/geography.R": {
+      "checksum": "da1f75b9a90612aab09a5eb44c8ea3bb"
+    },
+    "R/model/qa.R": {
+      "checksum": "9518d66ca8f45a3e11c8c9c1be2c2822"
+    },
+    "R/model/repository.R": {
+      "checksum": "21e46d91889db898493142117a6c3250"
+    },
+    "R/model/security.R": {
+      "checksum": "8da665f14cb0224ef98f05748d9b4326"
+    },
+    "R/model/species.R": {
+      "checksum": "9f40fae2004ef8097c0d0ecce9c72597"
+    },
+    "R/model/stats.R": {
+      "checksum": "9d9189cfadd155e3965114df9bbb0206"
+    },
+    "R/model/taxonomy.R": {
+      "checksum": "ebe94e0f71f5038a528486a148dd1e40"
+    },
+    "R/model/users.R": {
+      "checksum": "1f571b329c514397782651974d22eef3"
+    },
+    "R/model/verification.R": {
+      "checksum": "732b1267edb06d76b2d7cbfcf2b86a56"
+    },
+    "R/model/verification_store.R": {
+      "checksum": "b7d37f92eea5da0c6889764b93275c3f"
+    },
+    "R/view/mod_about.R": {
+      "checksum": "8aa4d293e17e6873cb00dae3e0251ca0"
+    },
+    "R/view/mod_analysis.R": {
+      "checksum": "807a5df6000f2117296708048f740fc1"
+    },
+    "R/view/mod_dashboard.R": {
+      "checksum": "5215b8266a0f9f75c95e6c4755f987f8"
+    },
+    "R/view/mod_detail.R": {
+      "checksum": "8a18d7dbbec1fc2d8baef51f9401605b"
+    },
+    "R/view/mod_filters.R": {
+      "checksum": "cba3501a90c8d898cc52f4b0a197ab06"
+    },
+    "R/view/mod_login.R": {
+      "checksum": "587225cd118e8d373a6bf7971ad13f05"
+    },
+    "R/view/mod_map.R": {
+      "checksum": "b1615479ca77ceb874037ba53e5849d3"
+    },
+    "R/view/mod_species.R": {
+      "checksum": "d044a503a7b1d99cd99ab9aedd22dfa9"
+    },
+    "R/view/mod_table.R": {
+      "checksum": "e65c26a2861868652071df469c987633"
+    },
+    "R/view/theme.R": {
+      "checksum": "0b2a5b9d4b39786e01b1468cdf97bece"
+    },
+    "R/view/ui_main.R": {
+      "checksum": "91e77c577f0dc783f036f2c60bf63cfa"
+    },
+    "README.md": {
+      "checksum": "efb113627bd73ad6a7dfeb5357289650"
+    },
+    "renv.lock": {
+      "checksum": "e77a77ab02a31bd73d7c07ae211c90b4"
+    },
+    "scripts/00_make_demo_data.R": {
+      "checksum": "d9849bbce93dff1f43404e2554508afd"
+    },
+    "scripts/01_build_data.R": {
+      "checksum": "83d3d03b2256da8fc98fe2068b556b2b"
+    },
+    "scripts/01b_build_admin1.R": {
+      "checksum": "d6341d182675fb8a15e19146a65bf9ac"
+    },
+    "scripts/02_qa_data.R": {
+      "checksum": "3c03afade4bf902ef3bd324ad264a8b9"
+    },
+    "scripts/03_render_docs.R": {
+      "checksum": "684a748ba7855708bb9c578fa92f3957"
+    },
+    "scripts/04_add_user.R": {
+      "checksum": "bea4af90952f860535c761f6ef432b05"
+    },
+    "scripts/load_project.R": {
+      "checksum": "aebfaf73b320ca2148a7abf7542ba2b9"
+    },
+    "scripts/qa_all.R": {
+      "checksum": "64f1e910d12543b9f90138dd4d5679ca"
+    },
+    "scripts/run_test_file.R": {
+      "checksum": "addcd40e64b556ae0681745718004b63"
+    },
+    "scripts/snapshot_deps.R": {
+      "checksum": "30c9649542d0f14df80fb6a3c09484c3"
+    },
+    "scripts/style_and_lint.R": {
+      "checksum": "9615086969394f6458d8c9732fbe9931"
+    },
+    "tests/testthat/setup.R": {
+      "checksum": "66a962e9f4fdf31bc7c44c4812641fc1"
+    },
+    "tests/testthat/test-auth-controller.R": {
+      "checksum": "d02c60bba6f07f8b244fc12e75946af8"
+    },
+    "tests/testthat/test-code-quality.R": {
+      "checksum": "a4db6f5db4269db328d7cf8ccdec63f5"
+    },
+    "tests/testthat/test-controllers.R": {
+      "checksum": "3e28aa12f506919ad5c1d337144fc9d0"
+    },
+    "tests/testthat/test-etl.R": {
+      "checksum": "b689bb6d50038bc370c4c88610e2b38a"
+    },
+    "tests/testthat/test-geo-privacy.R": {
+      "checksum": "183d89f1790c58579a69c79703fef09c"
+    },
+    "tests/testthat/test-integration-privacy.R": {
+      "checksum": "6e03b95f720de247752e5477c46a591b"
+    },
+    "tests/testthat/test-model-extra.R": {
+      "checksum": "cdde0a9732c99d639e74b77fa998a0eb"
+    },
+    "tests/testthat/test-modules.R": {
+      "checksum": "0659ea2c143129e27b80c2c203f336da"
+    },
+    "tests/testthat/test-performance.R": {
+      "checksum": "d086d0b1d7eaac8b7d635d2a18abbdf0"
+    },
+    "tests/testthat/test-qa-gates.R": {
+      "checksum": "6db8b7a197d4abb1018b7d757ef5f5b9"
+    },
+    "tests/testthat/test-regression-guards.R": {
+      "checksum": "26c22aad7650b32bf3be7abcd0559b2d"
+    },
+    "tests/testthat/test-security.R": {
+      "checksum": "552ad27dd310abaf596087feccd406e3"
+    },
+    "tests/testthat/test-species.R": {
+      "checksum": "318982c88039719899e5775dc74d3b75"
+    },
+    "tests/testthat/test-taxonomy-stats.R": {
+      "checksum": "f2b4390f35b957fbce6eb7dbf7a76d3f"
+    },
+    "tests/testthat/test-ui-contract.R": {
+      "checksum": "90930cfb92e8c94b2910d7d3000e062a"
+    },
+    "tests/testthat/test-users-login.R": {
+      "checksum": "396e01cc23be9a1a8aa6f93ae34f58be"
+    },
+    "tests/testthat/test-verification-model.R": {
+      "checksum": "1e57233ad772102cdefedc898e49eace"
+    },
+    "tests/testthat/test-view-helpers.R": {
+      "checksum": "cd6e5e64ef0740c6aa8f469e8669ccaa"
+    },
+    "www/custom.css": {
+      "checksum": "09a5a09b88cc4b44d888f76cc635a6c5"
+    },
+    "www/docs/metodologia.html": {
+      "checksum": "a87132d279963b96f21882095c6e9c5c"
+    }
+  },
+  "users": null
+}
