@@ -1,0 +1,11 @@
+linters: linters_with_defaults(
+    line_length_linter(100),
+    object_name_linter(styles = c("snake_case", "SNAKE_CASE", "symbols")),
+    object_usage_linter = NULL
+  )
+encoding: "UTF-8"
+exclusions: list(
+    "data" = Inf,
+    "docs/out" = Inf,
+    "www" = Inf
+  )

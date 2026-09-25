@@ -1,0 +1,5 @@
+* text=auto eol=lf
+*.rds binary
+*.sqlite binary
+*.png binary
+*.html -diff

@@ -1,0 +1,22 @@
+# Datos crudos (coordenadas exactas) y estado de la app: NUNCA versionar ni desplegar
+data/raw/
+data/private/
+*.sqlite
+*.jsonl
+
+# Secretos
+.Renviron
+.env
+
+# Generados (se reconstruyen con scripts/03_render_docs.R)
+docs/out/
+docs/*.html
+docs/*_files/
+www/docs/
+
+# Entorno local
+.Rhistory
+.RData
+.Rproj.user/
+rsconnect/
+renv/library/

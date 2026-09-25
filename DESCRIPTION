@@ -1,0 +1,38 @@
+Package: epigdatavisualizer
+Title: EpIG Data Visualizer
+Version: 0.1.0
+Description: Visor MVC en Shiny de registros de ocurrencia de epifitas vasculares del
+    Neotropico para taxonomos y especialistas. Generaliza coordenadas en el ETL, no ofrece
+    descargas y exige identidad. Archivo de metadatos del proyecto: declara las dependencias
+    para renv y CI; no es un paquete instalable.
+Encoding: UTF-8
+Depends: R (>= 4.3.0)
+Imports:
+    shiny,
+    bslib,
+    bsicons,
+    leaflet,
+    DT,
+    sf,
+    dplyr,
+    ggplot2,
+    readxl,
+    DBI,
+    RSQLite,
+    digest,
+    openssl,
+    withr,
+    jsonlite,
+    stringi,
+    htmltools
+Suggests:
+    testthat,
+    knitr,
+    rmarkdown,
+    lintr,
+    styler,
+    covr,
+    renv,
+    rsconnect,
+    rnaturalearth,
+    rnaturalearthhires
