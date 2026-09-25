@@ -73,9 +73,13 @@ avisos y 98,7 % de cobertura de líneas** (piso exigido: 90 %).
 Las guardias se validaron con pruebas de mutación (se inyectaron violaciones a propósito y fueron
 detectadas). Criterios de aceptación, lista manual, accesibilidad y política de defectos:
 `docs/out/qa.html`. Reglas de contribución y flujo Git del equipo: `CONTRIBUTING.md`.
-Reproducibilidad: `DESCRIPTION` declara las dependencias y `renv.lock` fija sus versiones
-(`renv::restore()`); `DESCRIPTION` **no** lleva `Type: Package` a propósito, porque Shiny lo
-interpretaría como un paquete de R. CI de plantilla en `.github/workflows/qa.yml` (**no ejecutado aún**).
+Reproducibilidad: `DESCRIPTION` declara las dependencias (fuente de verdad para instalarlas,
+incluido el despliegue). `renv.lock` fija versiones exactas para uso local (`renv::restore()`,
+regenerar con `scripts/snapshot_deps.R`); **no se versiona a propósito**, porque `rsconnect` lo
+detecta y trata de usarlo para instalar paquetes en el servidor en vez de escanear el código,
+lo que rompe el despliegue si la librería local no coincide exactamente con el archivo.
+`DESCRIPTION` **no** lleva `Type: Package` a propósito, porque Shiny lo interpretaría como un
+paquete de R. CI de plantilla en `.github/workflows/qa.yml` (**no ejecutado aún**).
 
 ## Usar datos reales
 

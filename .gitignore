@@ -20,3 +20,7 @@ www/docs/
 .Rproj.user/
 rsconnect/
 renv/library/
+# Solo referencia local (renv no está activado); su sola presencia hace que algunas
+# herramientas de despliegue (rsconnect) intenten instalar desde él en vez de escanear
+# las dependencias reales declaradas en DESCRIPTION. Regenerar con scripts/snapshot_deps.R.
+renv.lock
